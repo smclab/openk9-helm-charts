@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "common.names.name" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- if .Values.commonAnnotations }}
+      annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.matchLabels" . | nindent 8 }}
+    spec:
+      {{- include "common.images.renderPullSecrets" . | nindent 6 }}
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ template "common.images.fullname" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}-config
+          env:
+            - name: KUBERNETES_NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+            {{- if .Values.config.java.debug }}
+            - name: "JAVA_DEBUG"
+              value: "true"
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+              protocol: TCP
+            {{- if .Values.config.java.debug }}
+            - containerPort: 5005
+              name: "jvm-debug"
+              protocol: TCP
+            {{- end }}           
+          {{- if .Values.livenessProbe.enabled }}
+           {{ with .Values.livenessProbe }}
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: {{ $.Values.service.port }}
+              scheme: HTTP
+            failureThreshold: {{ .failureThreshold }}
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            periodSeconds: {{ .periodSeconds }}
+            successThreshold: {{ .successThreshold }}
+            timeoutSeconds: {{ .timeoutSeconds }}
+          {{- end }} 
+         {{- end }} 

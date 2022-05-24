@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  {{- $waitHosts := "" -}}
+  {{- $waitHosts = print $waitHosts .Values.rabbitmq.host ":" .Values.rabbitmq.port }}
+  WAIT_HOSTS: {{ $waitHosts | quote }}
+  WAIT_HOSTS_TIMEOUT: {{ .Values.config.waitHostsTimeout | quote }}
+
+  RABBIT_HOST: {{ .Values.rabbitmq.host | quote }}
+  RABBIT_PORT: {{ .Values.rabbitmq.port | quote }}
+  RABBIT_EXCHANGE: 'amq.topic'
+  RABBIT_QUEUE_NAME: 'io.openk9.ner'
+  RABBIT_PUB_ROUTING_KEY: 'entity-manager-request'
+  RABBITMQ_PASSWORD: {{ .Values.rabbitmq.password | quote }}
+  RABBITMQ_USER: {{ .Values.rabbitmq.username | quote }}
+ 

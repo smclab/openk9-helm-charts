@@ -1,0 +1,24 @@
+# This scenario creates a single-instance standalone ElasticSearch
+# machine, with the most basic configuration and limited
+# resource to be fit in a local K8s/K3s/Minukube environment
+
+# ElasticSearch Kibana Version
+imageTag: 7.15.0
+
+# Hostname needs namespace
+elasticsearchHosts: "http://elasticsearch-master.openk9:9200"
+
+# Only a single pod for this local enviroment
+replicas: 1
+
+# Allocate smaller chunks of memory per pod.
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256M"
+  limits:
+    cpu: "1000m"
+    memory: "512M"
+
+
+

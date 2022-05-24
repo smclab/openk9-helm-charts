@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  QUARKUS_DATASOURCE_REACTIVE_URL: {{ include "helper.postgresReactiveURL" . | quote }}
+  QUARKUS_DATASOURCE_USERNAME: {{ .Values.postgresql.username | quote }}
+  QUARKUS_DATASOURCE_PASSWORD: {{ .Values.postgresql.password | quote }}
+  QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION: 'update'
+  QUARKUS_HTTP_ACCESS_LOG_ENABLED: {{ .Values.config.httpAccessLog.enabled | quote }}
+  QUARKUS_HTTP_ACCESS_LOG_PATTERN: {{ .Values.config.httpAccessLog.pattern | quote }}
+  QUARKUS_OIDC_AUTH_SERVER_URL: {{ include "helper.keycloakURL" . | quote }}
+  QUARKUS_OIDC_CLIENT_ID: {{ .Values.keycloak.clientId | quote }}
+  #QUARKUS_HIBERNATE_ORM_LOG_SQL: "true"
+  QUARKUS_REST_CLIENT_KEYCLOAK_CLIENT_URL: {{ include "helper.keycloakURL" . | quote }}
+  QUARKUS_REST_CLIENT_DATASOURCE_CLIENT_URL: {{ include "helper.datasourceURL" . | quote }}
+  QUARKUS_REST_CLIENT_PLUGIN_DRIVER_CLIENT_URL: {{ include "helper.pluginDriverURL" . | quote }}
+  QUARKUS_REST_CLIENT_SEARCHER_CLIENT_URL: {{ include "helper.searcherURL" . | quote }}
+  #QUARKUS_REST_CLIENT_LOGGING_SCOPE: all
+  OPENK9_AUTHSERVERURL_TEMPLATE: '{{ include "helper.keycloakURL" . }}/auth/realms/{realm}'

@@ -1,0 +1,54 @@
+# This scenario creates a single-instance standalone Consul
+# machine, with the most basic configuration and limited
+# resource to be fit in a local CodeReady Containers environment
+###############################################################
+
+global:
+  name: consul
+  image: registry.connect.redhat.com/hashicorp/consul:1.10.3-ubi 
+  imageK8S: registry.connect.redhat.com/hashicorp/consul-k8s-control-plane:0.34.0-ubi
+  imagePullSecrets:
+    - name: 15831180-mm.kino-pull-secret
+
+  # The name of the datacenter that the agents should
+  # register as. This can't be changed once the Consul cluster is up and running
+  # since Consul doesn't support an automatic way to change this value currently:
+  # https://github.com/hashicorp/consul/issues/1858.
+  datacenter: dc1
+  
+  # The domain Consul will answer DNS queries for
+  # (see `-domain` (https://consul.io/docs/agent/options#_domain)) and the domain services synced from
+  # Consul into Kubernetes will have, e.g. `service-name.service.consul`.
+  domain: consul
+
+  openshift:
+    enabled: true
+  
+server:
+  replicas: 1
+  storage: 2Gi
+  
+ui:
+  enabled: true
+  service:
+    type: 'NodePort'
+
+# Configures the automatic Connect sidecar injector.
+connectInject:
+  # True if you want to enable connect injection. Set to "-" to inherit from
+  # global.enabled.
+  enabled: false
+
+  # The number of deployment replicas.
+  replicas: 1
+  
+  # If true, the injector will inject the
+  # Connect sidecar into all pods by default. Otherwise, pods must specify the
+  # injection annotation (https://consul.io/docs/k8s/connect#consul-hashicorp-com-connect-inject)
+  # to opt-in to Connect injection. If this is true, pods can use the same annotation
+  # to explicitly opt-out of injection.
+  default: false
+
+controller:
+  enabled: true
+ 

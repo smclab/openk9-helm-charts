@@ -1,0 +1,76 @@
+# This scenario creates a single-instance standalone Keycloak
+# machine, with the most basic configuration and limited
+# resource to be fit in a local CodeReady Containers environment
+###############################################################
+
+# Number of Keycloak replicas to deploy
+replicaCount: 1
+
+# Keycloak image version. The preferred way is to install the chart
+# version with the desired app version
+# images:
+#   tag: 12.0.4
+
+# Disable PostgreSQL dependency
+postgresql:
+  enabled: false
+
+# Set existing PostgreSQL
+extraEnv: |
+  - name: DB_VENDOR
+    value: postgres
+  - name: DB_ADDR
+    value: postgresql.openk9
+  - name: DB_PORT
+    value: "5432"
+  - name: DB_DATABASE
+    value: keycloak
+  - name: DB_USER_FILE
+    value: /secrets/db-creds/username
+  - name: DB_PASSWORD_FILE
+    value: /secrets/db-creds/password
+  - name: JAVA_OPTS
+    value: >-
+      -XX:+UseContainerSupport
+      -XX:MaxRAMPercentage=70.0
+      -Djava.net.preferIPv4Stack=true
+      -Djboss.modules.system.pkgs=$JBOSS_MODULES_SYSTEM_PKGS
+      -Djava.awt.headless=true
+      
+extraVolumeMounts: |
+  - name: db-creds
+    mountPath: /secrets/db-creds
+    readOnly: true
+
+extraVolumes: |
+  - name: db-creds
+    secret:
+      secretName: postgresql-keycloak-secret
+
+# Keycloak resource requests and limits
+resources:
+  limits:
+  #  cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 1Gi
+
+# Startup scripts to run before Keycloak starts up
+startupScripts:
+  get-plugins.sh: |
+    #!/bin/bash
+    mkdir -p /opt/jboss/keycloak/standalone/deployments
+    curl -L https://github.com/aznamier/keycloak-event-listener-rabbitmq/blob/target/keycloak-to-rabbit-1.0.jar?raw=true -o /opt/jboss/keycloak/standalone/deployments/keycloak-to-rabbit-1.0.jar
+
+ingress:
+  enabled: false
+
+# OpenShift doesn't like static uid/gui
+podSecurityContext:
+  fsGroup: null
+
+# OpenShift doesn't like static uid/gui
+securityContext:
+  runAsUser: null
+  runAsNonRoot: true

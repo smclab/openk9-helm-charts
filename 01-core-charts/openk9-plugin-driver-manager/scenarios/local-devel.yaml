@@ -1,0 +1,25 @@
+# Settings for a local development with OpenK9 into a K3s and a
+# docker registry exposed by K3s
+
+
+image:
+  registry: registry.private.local/openk9
+  name: openk9-plugin-driver-manager
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+  # Specify a imagePullPolicy
+  # Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  # ref: https://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  pullPolicy: Always
+  
+  
+# OpenK9 Plugin Driver Manager configuration
+config:
+  jvmOpts:
+    heapMin: "256m"
+    heapMax: "1g"
+    permGen: "64m"
+    permGenMax: "256m"
+
+

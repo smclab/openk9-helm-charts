@@ -1,0 +1,32 @@
+# This scenario creates a single-instance standalone ElasticSearch
+# machine, with the most basic configuration and limited
+# resource to be fit in a local CodeReady Containers
+
+# ElasticSearch Kibana Version
+imageTag: 7.15.0
+
+# Hostname needs namespace
+elasticsearchHosts: "http://elasticsearch-master:9200"
+
+# Only a single pod for this local enviroment
+replicas: 1
+
+# Allocate smaller chunks of memory per pod.
+resources:
+  requests:
+    cpu: "200m"
+    memory: "512Mi"
+  limits:
+    #cpu: "1000m"
+    memory: "1024Mi"
+
+# OpenShift doesn't like static uid/gui
+securityContext:
+  runAsUser: null
+
+# OpenShift doesn't like static uid/gui
+podSecurityContext:
+  fsGroup: null
+  runAsUser: null
+
+

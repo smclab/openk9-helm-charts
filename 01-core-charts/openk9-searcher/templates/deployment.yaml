@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "common.names.name" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- if (or .Values.commonAnnotations .Values.config.annotations) }}
+      annotations: 
+        {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.config.annotations "context" $ ) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.matchLabels" . | nindent 8 }}
+    spec:
+      {{- include "common.images.renderPullSecrets" . | nindent 6 }}
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ template "common.images.fullname" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          # command: ['sh', '-c', '/wait && karaf run debug']
+          #command:
+          #  - tail
+          #  - "-f"
+          #  - /dev/null
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}-config
+          env:
+          {{- if .Values.keycloak.secretName }}
+          - name: KEYCLOAK_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.keycloak.secretName | quote }}
+                key: secret
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+            - name: admin
+              containerPort: {{ .Values.service.adminPort }}
+            {{- with .Values.service.debug }}
+             {{- if .enabled }}
+            - name: debug
+              containerPort: {{ .port }}
+             {{- end }}
+            {{- end }}
+          volumeMounts:
+            - mountPath: /karaf/configs
+              name: openk9-configs
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "cd /karaf/configs && cp *.cfg *.json /karaf/etc"]
+      volumes:
+      - name: openk9-configs
+        configMap:
+          name: {{ template "common.names.name" . }}-karaf-config
+          items:
+            - key: io.openk9.auth.keycloak.KeycloakClientImpl.cfg
+              path: io.openk9.auth.keycloak.KeycloakClientImpl.cfg
+            - key: io.openk9.auth.query.parser.AuthQueryParser.json
+              path: io.openk9.auth.query.parser.AuthQueryParser.json
+            - key: io.openk9.datasource.client.internal.DatasourceClientImpl.cfg
+              path: io.openk9.datasource.client.internal.DatasourceClientImpl.cfg
+            - key: io.openk9.ingestion.rabbitmq.RabbitMQActivator.cfg
+              path: io.openk9.ingestion.rabbitmq.RabbitMQActivator.cfg
+            - key: io.openk9.internal.http.ReactorNettyActivator.cfg
+              path: io.openk9.internal.http.ReactorNettyActivator.cfg
+            - key: io.openk9.plugin.driver.manager.client.service.PluginDriverManagerClientImpl.cfg
+              path: io.openk9.plugin.driver.manager.client.service.PluginDriverManagerClientImpl.cfg
+            - key: io.openk9.search.client.internal.configuration.ElasticSearchConfigurationImpl.cfg
+              path: io.openk9.search.client.internal.configuration.ElasticSearchConfigurationImpl.cfg
+            - key: io.openk9.search.client.metrics.ElasticSearchMetricRegistry.cfg
+              path: io.openk9.search.client.metrics.ElasticSearchMetricRegistry.cfg
+            - key: io.openk9.vertx.internal.consul.VertxConsulActivator.json
+              path: io.openk9.vertx.internal.consul.VertxConsulActivator.json
+            - key: io.openk9.vertx.internal.consul.VertxConsulActivator.cfg
+              path: io.openk9.vertx.internal.consul.VertxConsulActivator.cfg
+            - key: io.openk9.vertx.internal.discovery.VertxServiceDiscoveryActivator.json
+              path: io.openk9.vertx.internal.discovery.VertxServiceDiscoveryActivator.json

@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-karaf-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  io.openk9.auth.keycloak.KeycloakClientImpl.cfg: |-
+    baseUrl={{ include "helper.keycloakURL" . }}
+    clientId=openk9
+    clientSecret=$[env:KEYCLOAK_SECRET; default=openk9]
+
+  io.openk9.auth.query.parser.AuthQueryParser.json: |-
+    {
+        "enabled" : true,
+        "checkRoleGuest" : false
+    }
+
+  io.openk9.datasource.client.internal.DatasourceClientImpl.cfg: |-
+    baseUrl={{ include "helper.datasourceURL" . }}
+  
+  {{ with .Values.rabbitmq -}}
+  io.openk9.ingestion.rabbitmq.RabbitMQActivator.cfg: |-
+    uri=amqp://{{ .username }}:{{ .password }}@{{ .host }}:{{ .port }}
+  {{ end }}
+
+  io.openk9.internal.http.ReactorNettyActivator.cfg: |-
+    port=8080
+    name=name=openk9-searcher-http
+    selectCount=1
+    workerCount=-1
+    daemon=true
+    wiretap=true
+    contextPath=/
+    compress=false
+
+  io.openk9.plugin.driver.manager.client.service.PluginDriverManagerClientImpl.cfg: |-
+    url={{ include "helper.pluginDriverURL" . }}
+
+  {{ with .Values.elasticsearch -}}
+  io.openk9.search.client.internal.configuration.ElasticSearchConfigurationImpl.cfg: |-
+    hosts={{ .host }}:{{ .port }}
+    bufferMaxSize=100
+    bufferMaxTime=1000
+    username={{ .username }}
+    password={{ .password }}
+    
+  io.openk9.search.client.metrics.ElasticSearchMetricRegistry.cfg: |-
+    elastic.host=http://{{ .host }}:{{ .port }}
+    elastic.autoCreateIndex=false
+    elastic.userName={{ .username }}
+    elastic.password={{ .password }}
+
+  {{ end }}
+
+  {{ with .Values.consul -}}
+  io.openk9.vertx.internal.consul.VertxConsulActivator.cfg: |-
+    host={{ .host }}
+    port={{ .port }}
+    scan-period=2000
+    
+  io.openk9.vertx.internal.consul.VertxConsulActivator.json: |-
+    {
+      "host": {{ .host | quote }},
+      "port" : {{ .port }},
+      "scan-period": 2000
+    }
+    
+  io.openk9.vertx.internal.discovery.VertxServiceDiscoveryActivator.json: |-
+    {
+      "host": {{ .host | quote }},
+      "port" : {{ .port }},
+      "scan-period": 2000
+    }
+   
+  {{ end }}
+

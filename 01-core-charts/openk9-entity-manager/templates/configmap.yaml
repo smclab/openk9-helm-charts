@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  RABBITMQ_HOST: {{ .Values.rabbitmq.host | quote }}
+  RABBITMQ_PASSWORD: {{ .Values.rabbitmq.password | quote }}
+  RABBITMQ_USERNAME: {{ .Values.rabbitmq.username | quote }}
+  RABBITMQ_PORT: {{ .Values.rabbitmq.port | quote }}
+  
+  QUARKUS_CONSUL_CONFIG_AGENT_HOST_PORT: "{{ .Values.consul.host }}:{{ .Values.consul.port }}"
+  QUARKUS_HTTP_ACCESS_LOG_ENABLED: {{ .Values.config.httpAccessLog.enabled | quote }}
+  QUARKUS_HTTP_ACCESS_LOG_PATTERN: {{ .Values.config.httpAccessLog.pattern | quote }}
+  
+  QUARKUS_ELASTICSEARCH_HOSTS: "{{ .Values.elasticsearch.host }}:{{ .Values.elasticsearch.port }}"
+  QUARKUS_ELASTICSEARCH_USERNAME: {{ .Values.elasticsearch.username | quote }}
+  QUARKUS_ELASTICSEARCH_PASSWORD: {{ .Values.elasticsearch.password | quote }}
+  
+  QUARKUS_NEO4J_URI: "bolt://{{ .Values.neo4j.host }}:{{ .Values.neo4j.port }}"
+  QUARKUS_NEO4J_AUTHENTICATION_USERNAME: {{ .Values.neo4j.username | quote }}
+  QUARKUS_NEO4J_AUTHENTICATION_PASSWORD: {{ .Values.neo4j.password | quote }}
+  
+  OPENK9_ENTITY_UNIQUE_ENTITIES: 'date,organization,loc,email,document,bank,person'
+  OPENK9_ENTITY_MIN_HOPS: '1'
+  OPENK9_ENTITY_MAX_HOPS: '2'
+  OPENK9_ENTITY_SCORE_THRESHOLD: '0.8'
+  
+  HZ_NETWORK_JOIN_KUBERNETES_NAMESPACE: {{ .Release.Namespace | quote }}
+
+  HZ_NETWORK_JOIN_KUBERNETES_SERVICENAME: openk9-entity-manager
+
+  QUARKUS_OPENTELEMETRY_TRACER_EXPORTER_OTLP_ENDPOINT: 'http://otel-collector.observability.svc.cluster.local:4317'
+

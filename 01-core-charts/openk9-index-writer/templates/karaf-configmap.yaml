@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-karaf-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  {{ with .Values.rabbitmq -}}
+  RabbitMQActivator.cfg: |-
+    uri=amqp://{{ .username }}:{{ .password }}@{{ .host }}:{{ .port }}
+  {{ end }}
+  {{ with .Values.elasticsearch -}}
+  ElasticSearchConfigurationImpl.cfg: |-
+    hosts={{ .host }}:{{ .port }}
+    bufferMaxSize=100
+    bufferMaxTime=1000
+    username={{ .username }}
+    password={{ .password }}
+    
+  ElasticSearchMetricRegistry.cfg: |-
+    elastic.host=http://{{ .host }}:{{ .port }}
+    elastic.autoCreateIndex=false
+    elastic.userName={{ .username }}
+    elastic.password={{ .password }}
+
+  {{ end }}
+  {{ with .Values.openk9.pluginDriverManager -}}
+  PluginDriverManagerClientImpl.cfg: |-
+    url=http://{{ .host }}:{{ .port }}
+  {{ end }}
+
+  {{ with .Values.consul -}}
+  VertxConsulActivator.cfg: |-
+    host={{ .host }}
+    port={{ .port }}
+    scan-period=2000
+
+  VertxConsulActivator.json: |-
+    {
+      "host": {{ .host | quote }},
+      "port" : {{ .port }},
+      "scan-period": 2000
+    }
+
+  VertxServiceDiscoveryActivator.json: |- 
+    {
+      "host": {{ .host | quote }},
+      "port" : {{ .port }},
+      "scan-period": 2000
+    }
+   
+  {{ end }}
+  {{ with .Values.openk9.datasource -}}
+  DatasourceClientImpl.cfg: |-
+    baseUrl=http://{{ .host }}:{{ .port }}/
+  {{ end }}
+  ReactorNettyActivator.cfg: |-
+    port=8080
+    name=openk9-index-writer-http
+    selectCount=1
+    workerCount=-1
+    daemon=true
+    wiretap=true
+    contextPath=/
+    compress=false
+  
+  vertx.json: |-
+    {
+        "maxEventLoopExecuteTime" : 20,
+        "maxEventLoopExecuteTimeUnit" : "SECONDS"
+    }
+

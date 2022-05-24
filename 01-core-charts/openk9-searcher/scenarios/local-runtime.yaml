@@ -1,0 +1,17 @@
+# This scenario creates a single standalone Searcher
+# machine, with the most basic configuration and limited
+# resource to be fit in a local K8s/K3s/Minukube environment
+
+
+# OpenK9 Searcher configuration
+config:
+  jvmOpts:
+    heapMin: "256m"
+    heapMax: "1g"
+    permGen: "64m"
+    permGenMax: "256m"
+
+  
+  
+
+

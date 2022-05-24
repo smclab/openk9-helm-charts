@@ -1,0 +1,20 @@
+{{- if .Values.hazelcastManagementCenter.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "common.names.name" . }}-hazelcast-mc
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ template "common.names.name" . }}-hazelcast-mc
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector: 
+    app.kubernetes.io/name: {{ template "common.names.name" $ }}-hazelcast-mc
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  type: {{ .Values.hazelcastManagementCenter.service.type }}
+
+{{- end }}

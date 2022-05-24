@@ -1,0 +1,39 @@
+# This scenario creates a single-instance standalone RabbitMQ
+# machine, with the most basic configuration and limited
+# resource to be fit in a local CodeReady Containers environment
+
+image:
+  tag: 3.8
+
+auth:
+  username: "openk9"
+  password: "openk9"
+
+extraPlugins: "rabbitmq_amqp1_0"
+
+clustering:
+  enabled: false
+
+replicaCount: 1
+
+terminationGracePeriodSeconds: 30
+
+resources:
+  limits:
+    #cpu: "1000m"
+    memory: "1Gi"
+  requests:
+    cpu: "250m"
+    memory: "512Mi"
+
+persistence:
+  size: 5Gi
+
+# OpenShift doesn't like static uid/gui
+podSecurityContext:
+  enabled: false
+
+# OpenShift doesn't like initContainers with preconfigured uid
+volumePermissions:
+  enabled: false
+

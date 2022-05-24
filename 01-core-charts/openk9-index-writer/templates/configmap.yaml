@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  {{- $waitHosts := "" -}}
+  {{- $waitHosts = print $waitHosts .Values.postgresql.host ":" .Values.postgresql.port "," -}}
+  {{- $waitHosts = print $waitHosts .Values.rabbitmq.host ":" .Values.rabbitmq.port "," -}}
+  {{- $waitHosts = print $waitHosts .Values.elasticsearch.host ":" .Values.elasticsearch.port }}
+  WAIT_HOSTS: {{ $waitHosts | quote }}
+  WAIT_HOSTS_TIMEOUT: {{ .Values.config.waitHostsTimeout | quote }}
+
+  JAVA_DEBUG_PORT: '*:5005'
+  {{- with .Values.config.jvmOpts }}
+  JAVA_MIN_MEM: {{ .heapMin | quote }}
+  JAVA_MAX_MEM: {{ .heapMax | quote }}
+  JAVA_PERM_MEM: {{ .permGen | quote }}
+  JAVA_MAX_PERM_MEM: {{ .permGenMax | quote }}
+  {{- end }}
+
+  {{- $consulServiceAddress := include "helper.consulServiceAddress" (dict "context" $) }}
+  CONSUL_SERVICE_ADDRESS: {{ $consulServiceAddress | quote }}
+  CONSUL_SERVICE_PORT: {{ .Values.service.port | quote }}
+  CONSUL_SERVICE_CHECK_URL: 'http://{{ $consulServiceAddress }}:{{ .Values.service.port }}/monitoring/health'
+  CONSUL_SERVICE_CHECK_INTERVAL: {{ .Values.consul.checkInterval | quote }}

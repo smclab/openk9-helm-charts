@@ -1,0 +1,45 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ template "common.names.name" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  entryPoints:
+    - web
+    {{- if .Values.ingress.tls.enabled }}
+    - websecure
+    {{- end }}
+  routes:
+    - kind: Rule
+      match: "Host(`{{ .Values.ingress.host }}`) && PathPrefix(`{{ .Values.ingres.pathPrefix }}`)"
+      services:
+        - kind: Service
+          port: {{ .Values.service.port }}
+          name: {{ template "common.names.name" . }}
+          namespace: {{ .Release.Namespace | quote }}
+      middlewares:
+        - name: {{ template "common.names.name" . }}-stripprefix
+          namespace: {{ .Release.Namespace | quote }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ template "common.names.name" . }}-stripprefix
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  stripPrefix:
+    prefixes:
+      - {{ .Values.ingres.pathPrefix | quote }}
+{{- end -}}

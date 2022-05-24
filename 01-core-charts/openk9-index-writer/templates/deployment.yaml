@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "common.names.name" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+     {{- if (or .Values.commonAnnotations .Values.config.annotations) }}
+      annotations: 
+        {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 8 }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.config.annotations "context" $ ) | nindent 8 }}
+      {{- end }}
+      labels: {{- include "common.labels.matchLabels" . | nindent 8 }}
+    spec:
+      {{/*
+      initContainers:
+        - name: chowner
+          image:  alpine:latest
+          command: ["/bin/sh", "-cx"]
+          args:
+            - ls -alt /karaf/data; chown -R `id -u`:`id -G | cut -d " " -f2` /karaf/data
+          volumeMounts:
+          - name: karaf-data
+            mountPath: /karaf/data
+      */}}
+      {{- include "common.images.renderPullSecrets" . | nindent 6 }}
+      #serviceAccountName: {{ template "common.names.serviceAccountName" . }}
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ template "common.images.fullname" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          #command:
+          #  - tail
+          #  - "-f"
+          #  - /dev/null
+          #command:
+          #  - /bin/sh
+          #  - -c
+          #  - "id && ls -la /opt/apache-karaf && tail -f /dev/null"
+          envFrom:
+            - configMapRef:
+                name: {{ template "common.names.name" . }}-config
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+            - name: admin
+              containerPort: {{ .Values.service.adminPort }}
+          volumeMounts:
+            - mountPath: /karaf/configs
+              name: openk9-configs
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "cd /karaf/configs && cp *.cfg *.json /karaf/etc && cd vertx && cp * /karaf/etc"]
+
+      volumes:
+      - name: openk9-configs
+        configMap:
+          name: {{ template "common.names.name" . }}-karaf-config
+          items:
+            - key: DatasourceClientImpl.cfg
+              path: io.openk9.datasource.client.internal.DatasourceClientImpl.cfg
+            - key: RabbitMQActivator.cfg
+              path: io.openk9.ingestion.rabbitmq.RabbitMQActivator.cfg
+            - key: ReactorNettyActivator.cfg
+              path: io.openk9.internal.http.ReactorNettyActivator.cfg
+            - key: PluginDriverManagerClientImpl.cfg
+              path: io.openk9.plugin.driver.manager.client.service.PluginDriverManagerClientImpl.cfg
+            - key: ElasticSearchConfigurationImpl.cfg
+              path: io.openk9.search.client.internal.configuration.ElasticSearchConfigurationImpl.cfg
+            - key: ElasticSearchMetricRegistry.cfg
+              path: io.openk9.search.client.metrics.ElasticSearchMetricRegistry.cfg
+            - key: VertxConsulActivator.cfg
+              path: io.openk9.vertx.internal.consul.VertxConsulActivator.cfg
+            - key: VertxConsulActivator.json
+              path: io.openk9.vertx.internal.consul.VertxConsulActivator.json
+            - key: VertxServiceDiscoveryActivator.json
+              path: io.openk9.vertx.internal.discovery.VertxServiceDiscoveryActivator.json
+            - key: vertx.json
+              path: vertx/vertx.json
+              
+      #  persistentVolumeClaim:
+      #    claimName: openk9-claim

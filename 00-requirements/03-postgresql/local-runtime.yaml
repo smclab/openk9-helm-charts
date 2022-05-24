@@ -1,0 +1,36 @@
+# This scenario creates a single-instance standalone RabbitMQ
+# machine, with the most basic configuration and limited
+# resource to be fit in a local K8s/K3s/Minukube environment
+
+
+image:
+  # We want latest PostgreSQL 13.x
+  tag: 13
+
+auth:
+  # enable default "postgres" admin user
+  enablePostgresUser: true
+  # password for default postgres admin user
+  postgresPassword: "system"
+  # custom user to create
+  username: "openk9"
+  # custom user password
+  password: "openk9"
+  # custom database
+  database: "openk9"
+
+architecture: standalone
+
+primary:  
+  initdb:
+    args: "--no-locale --encoding=UTF8"
+  resources:
+    limits: 
+      memory: 256Mi
+      cpu: 250m
+    requests:
+      memory: 256Mi
+      cpu: 250m
+
+persistence:
+  size: 2Gi

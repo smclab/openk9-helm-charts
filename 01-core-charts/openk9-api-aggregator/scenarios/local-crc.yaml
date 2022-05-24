@@ -1,0 +1,24 @@
+# This scenario creates a single standalone API Aggregator
+# machine, with the most basic configuration and limited
+# resource to be fit in a local K8s/K3s/Minukube environment
+
+config:
+  java:
+    debug: true
+
+# Existing Keycloak service
+keycloak:
+  realm: "openk9.crc.testing"
+  
+# Ingress
+ingress:
+  enabled: false
+
+# OpenShift Route
+route:
+  enabled: true
+  host: "demo.openk9.mycluster-mil01-b3c-4x16-7769044809ea3242c3fcc2ee877990c6-0000.mil01.containers.appdomain.cloud"
+  tls:
+    enabled: true
+
+

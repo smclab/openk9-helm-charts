@@ -1,0 +1,18 @@
+# This scenario creates a single standalone API Aggregator
+# machine, with the most basic configuration and limited
+# resource to be fit in a local K8s/K3s/Minukube environment
+
+config:
+  java:
+    debug: true
+
+# Existing Keycloak service
+keycloak:
+  realm: "demo.openk9.local"
+  
+# Ingress
+ingress:
+  host: "demo.openk9.local"
+
+
+

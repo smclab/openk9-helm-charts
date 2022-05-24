@@ -1,0 +1,33 @@
+# This scenario creates a single-instance standalone ElasticSearch
+# machine, with the most basic configuration and limited
+# resource to be fit in a local K8s/K3s/Minukube environment
+
+# Permit co-located instances for solitary k3s virtual machines.
+antiAffinity: "soft"
+
+# Shrink default JVM heap.
+esJavaOpts: "-Xmx512m -Xms512m"
+
+# ElasticSearch Version
+imageTag: 7.15.0
+
+# Only a single pod for this development enviroment
+replicas: 1
+
+# Allocate smaller chunks of memory per pod.
+resources:
+  requests:
+    cpu: "400m"
+    memory: "512Mi"
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+
+# Request smaller persistent volumes. In a cloud environment small
+# volume means low IOPS
+volumeClaimTemplate:
+  accessModes: [ "ReadWriteOnce" ]
+  #storageClassName: "local-path"
+  resources:
+    requests:
+      storage: 5Gi

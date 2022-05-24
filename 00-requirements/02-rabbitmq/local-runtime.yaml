@@ -1,0 +1,30 @@
+# This scenario creates a single-instance standalone RabbitMQ
+# machine, with the most basic configuration and limited
+# resource to be fit in a local K8s/K3s/Minukube environment
+
+image:
+  tag: 3.8
+
+auth:
+  username: "openk9"
+  password: "openk9"
+
+extraPlugins: "rabbitmq_amqp1_0"
+
+clustering:
+  enabled: false
+
+replicaCount: 1
+
+terminationGracePeriodSeconds: 30
+
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512M"
+  requests:
+    cpu: "100m"
+    memory: "256M"
+
+persistence:
+  size: 1Gi

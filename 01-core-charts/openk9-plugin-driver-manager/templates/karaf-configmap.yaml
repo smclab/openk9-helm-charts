@@ -1,0 +1,115 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "common.names.name" . }}-karaf-config
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  {{ with .Values.openk9.entityManager -}}
+  io.openk9.entity.manager.client.internal.EntityManagerClientImpl.cfg: |-
+    url=http://{{ .host }}:{{ .port }}
+  {{ end }}
+
+  io.openk9.entity.manager.pub.sub.binding.internal.EntityManagerResponseBinding.json: |-
+    {
+       "exchange" : "entity-manager-response.topic",
+       "type" : "topic"
+    }
+  
+  {{ with .Values.rabbitmq -}}
+  io.openk9.ingestion.rabbitmq.RabbitMQActivator.cfg: |-
+    uri=amqp://{{ .username }}:{{ .password }}@{{ .host }}:{{ .port }}
+  {{ end }}
+
+  io.openk9.internal.http.ReactorNettyActivator.cfg: |-
+    port=8080
+    name=name=openk9-plugin-driver-manager-http
+    selectCount=1
+    workerCount=-1
+    daemon=true
+    wiretap=true
+    contextPath=/
+    compress=false
+
+  io.openk9.plugins.applications.driver.ApplicationPluginDriver.cfg: |-
+    schedulerEnabled=true
+
+  io.openk9.plugins.email.driver.EmailPluginDriver.cfg: |-
+    {{- with .Values.config.plugins.email }}
+    url=http://{{ .host }}:{{ .port }}/
+    {{- end }}
+    path=/execute
+    method=2
+    headers=Content-Type:application/json
+    schedulerEnabled=true
+
+  io.openk9.plugins.email.enrichprocessor.EmailNerEnrichProcessor.cfg: |-
+    {{- with .Values.config.plugins.nerIt }}
+    url=http://{{ .host }}:{{ .port }}/
+    {{- end }}
+    method=2
+    headers=Content-Type:application/json
+    path=/predict
+    
+  io.openk9.plugins.web.generic.driver.GenericWebPluginDriver.cfg: |-
+    {{- with .Values.config.plugins.webParser }}
+    url=http://{{ .host }}:{{ .port }}/
+    {{- end }}
+    path=/execute-generic
+    method=2
+    headers=Content-Type:application/json
+    schedulerEnabled=true
+
+  io.openk9.plugins.web.generic.enrichprocessor.WebNerEnrichProcessor.cfg: |-
+    {{- with .Values.config.plugins.nerIt }}
+    url=http://{{ .host }}:{{ .port }}/
+    {{- end }}
+    method=2
+    headers=Content-Type:application/json
+    path=/predict
+
+  io.openk9.plugins.web.sitemap.driver.SitemapWebPluginDriver.cfg: |-
+    {{- with .Values.config.plugins.webParser }}
+    url=http://{{ .host }}:{{ .port }}/
+    {{- end }}
+    path=/execute-sitemap
+    method=2
+    headers=Content-Type:application/json
+    schedulerEnabled=true
+
+  io.openk9.plugins.web.sitemap.enrichprocessor.WebNerEnrichProcessor.cfg: |-
+    {{- with .Values.config.plugins.nerIt }}
+    url=http://{{ .host }}:{{ .port }}/
+    {{- end }}
+    method=2
+    headers=Content-Type:application/json
+    path=/predict
+
+  io.openk9.search.enrich.internal.EndEnrichProcessorImpl.json: |-
+    {
+       "exchange" :  "amq.topic",
+       "routingKeySuffix" : "data"
+    }
+
+  {{ with .Values.consul -}}
+  io.openk9.vertx.internal.consul.VertxConsulActivator.json: |-
+    {
+      "host": {{ .host | quote }},
+      "port" : {{ .port }},
+      "scan-period": 2000
+    }
+    
+  io.openk9.vertx.internal.consul.VertxConsulActivator.cfg: |-
+    host={{ .host }}
+    port={{ .port }}
+    scan-period=2000
+
+    
+  io.openk9.vertx.internal.discovery.VertxServiceDiscoveryActivator.json: |-
+    {
+      "host": {{ .host | quote }},
+      "port" : {{ .port }},
+      "scan-period": 2000
+    }
+   
+  {{ end }}
